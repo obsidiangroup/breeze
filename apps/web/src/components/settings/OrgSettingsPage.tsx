@@ -254,6 +254,10 @@ export default function OrgSettingsPage({ orgId: propOrgId }: OrgSettingsPagePro
   // effective pins (shown when `defaults.agentVersionPins` is partner-locked).
   const [pinnableVersions, setPinnableVersions] = useState<PinnableVersions | null>(null);
   const [partnerPins, setPartnerPins] = useState<AgentVersionPinsValue | undefined>(undefined);
+  // Issue #2752: the merged `defaults` category. OrgDefaultsEditor seeds its
+  // partner-locked fields from this so a disabled control shows the value that is
+  // actually in force (and re-posts it unchanged, which the API accepts).
+  const [effectiveDefaults, setEffectiveDefaults] = useState<Record<string, unknown> | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [copiedOrgId, setCopiedOrgId] = useState(false);
@@ -293,6 +297,7 @@ export default function OrgSettingsPage({ orgId: propOrgId }: OrgSettingsPagePro
         const effData = await effRes.json();
         const lockedList: string[] = effData.locked || [];
         setLocked(lockedList);
+        setEffectiveDefaults(effData.effective?.defaults);
         // Issue #2124: pins are inherit-with-override, NOT enforced-locked (see the
         // assertNotLocked exemption in the org PATCH). But `locked` still carries
         // `defaults.agentVersionPins` when the PARTNER set one — we use that purely
@@ -705,6 +710,8 @@ export default function OrgSettingsPage({ orgId: propOrgId }: OrgSettingsPagePro
               onSave={(data) => handleSave('defaults', data)}
               pinnableVersions={pinnableVersions}
               partnerPins={partnerPins}
+              locked={locked}
+              effectiveDefaults={effectiveDefaults}
             />
           </div>
         );
